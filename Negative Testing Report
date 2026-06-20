@@ -1,0 +1,154 @@
+Negative Testing Report
+Project
+
+Employee Salary Management HRMS
+
+Purpose
+
+The purpose of this negative testing audit is to identify how the HRMS behaves when users or clients send invalid, incomplete, unexpected, or unsafe data. In a payroll-related system, negative testing matters because incorrect inputs can silently corrupt salary records, create wrong employee data, or block payroll work.
+
+This report focuses on form-level and API-level failure scenarios that are most likely to affect employee records, salary updates, authentication, and protected HRMS actions.
+
+Scope Covered
+
+The following areas were considered for negative testing:
+
+Authentication
+login with missing fields
+login with wrong credentials
+access to protected resources without authentication
+Employee creation / employee update
+missing required fields
+invalid salary values
+negative numbers
+extremely large numbers
+empty strings
+duplicate submissions
+Salary-related data
+salary set to 0
+negative salary
+invalid type for salary
+repeated update requests
+stale or partial update requests
+General security-oriented checks
+script injection strings in text fields
+long text input
+malformed payloads
+requests with missing JSON fields
+Negative Test Cases Performed
+1) Authentication tests
+Case A — Login with empty username and password
+
+Input: empty login form
+Expected behavior: system should reject login and show a validation or authentication error
+Risk if not handled: invalid login requests can reach backend unnecessarily and confuse the user
+
+Case B — Login with wrong password
+
+Input: valid username + incorrect password
+Expected behavior: clear “invalid credentials” style response without exposing technical details
+Risk if not handled: users may not understand why login failed, or backend may leak unnecessary information
+
+Case C — Access protected employee/salary routes without login
+
+Input: request protected route directly without authenticated session
+Expected behavior: request should be rejected with unauthorized response
+Risk if not handled: unauthorized users may access or modify payroll-related data
+
+2) Employee creation / update tests
+Case D — Create employee with missing required fields
+
+Input: submit employee form without one or more required values
+Expected behavior: validation error and no employee should be created
+Risk if not handled: incomplete employee records may enter payroll flow and cause downstream salary issues
+
+Case E — Create or update employee with negative salary
+
+Input: salary = -1000
+Expected behavior: validation should reject the request
+Risk if not handled: invalid salary data can be stored and affect payroll calculations or salary reports
+
+Case F — Create or update employee with salary = 0
+
+Input: salary = 0
+Expected behavior: system should either reject it or clearly support it only if the business rule allows it
+Risk if not handled: a payroll operator may accidentally save zero salary and generate incorrect salary output
+
+Case G — Create employee with extremely large salary value
+
+Input: salary = 999999999
+Expected behavior: system should validate range and reject unrealistic values if business rules require it
+Risk if not handled: outlier values can break payroll reports, dashboards, or salary calculations
+
+Case H — Submit employee form twice quickly
+
+Input: double-click save / repeated request
+Expected behavior: duplicate creation should be prevented
+Risk if not handled: duplicate employee or duplicate salary records may be created
+
+3) Input integrity / malformed payload tests
+Case I — Send invalid data type in salary field
+
+Input: salary = "abc" instead of number
+Expected behavior: backend should reject invalid type with validation error
+Risk if not handled: malformed data may cause runtime errors or invalid database records
+
+Case J — Send payload with missing fields directly to API
+
+Input: incomplete JSON body
+Expected behavior: backend should reject request with meaningful error
+Risk if not handled: system may fail unpredictably or save partial data
+
+Case K — Long text / special characters in name or designation fields
+
+Input: very long string or special characters
+Expected behavior: system should handle safely without crashing or corrupting data
+Risk if not handled: broken UI rendering, database issues, or unsafe content storage
+
+Case L — Script injection string in text field
+
+Input: <script>alert('x')</script>
+Expected behavior: system should safely reject, sanitize, or store safely without execution
+Risk if not handled: stored XSS or unsafe rendering in admin pages
+
+Five Most Critical Failures to Automate
+
+The following failures are the most important to automate because they directly protect salary and employee data:
+
+1. Reject unauthenticated access to protected employee/salary actions
+
+Why critical: prevents unauthorized payroll or employee data access
+
+2. Reject negative salary values
+
+Why critical: prevents obviously invalid payroll data from entering the system
+
+3. Reject employee creation with missing required fields
+
+Why critical: prevents incomplete employee records from reaching payroll workflows
+
+4. Reject malformed salary type input
+
+Why critical: protects backend and data integrity from invalid payloads
+
+5. Prevent duplicate employee creation / repeated submit behavior
+
+Why critical: avoids duplicate records that can later create payroll confusion
+
+Observations and Risk Summary
+
+The most important pattern in negative testing for this HRMS is weak validation at the boundary of payroll data. If the system allows invalid employee or salary information to enter the database, the problem may not appear immediately on the same screen. Instead, it can surface later during salary review, payroll generation, or reporting — when the cost of correction is much higher.
+
+That is why negative testing in this HRMS should focus less on cosmetic form behavior and more on whether invalid data can cross the system boundary and affect payroll-related records.
+
+Recommended Negative Test Automation Scope
+
+I would automate negative tests for:
+
+protected route access
+salary validation
+employee required-field validation
+malformed API payload rejection
+duplicate create / repeated submit protection
+
+I would keep broader exploratory negative testing manual for low-risk UI behaviors and uncommon visual edge cases, because those are lower business risk than payroll-data integrity failures.
